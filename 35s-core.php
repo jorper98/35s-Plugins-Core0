@@ -293,7 +293,7 @@ function s35_core_row_meta($links, $file) {
         );
         
         if (get_option('s35_core_installed_from_github')) {
-            $row_meta['github'] = '<a href="https://github.com/your-username/35s-core-plugin" target="_blank">' . __('View on GitHub', '35s-core') . '</a>';
+            $row_meta['github'] = '<a href="https://github.com/jorper98/35s-core-plugin" target="_blank">' . __('View on GitHub', '35s-core') . '</a>';
         }
         
         return array_merge($links, $row_meta);
