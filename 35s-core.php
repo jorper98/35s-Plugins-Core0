@@ -3,7 +3,7 @@
 Plugin Name: 35s Core
 Plugin URI: https://35sites.com/wordpress-plugins/
 Description: Core functionality for all 35s plugins. Provides centralized menu management, shared utilities, and automatic updates from GitHub.
-Version: 1.0.2
+Version: 1.0.3
 Author: Jorge Pereira (35sites)
 Author URI: https://35sites.com/wordpress-plugins/
 License: GPL v2 or later
@@ -64,6 +64,8 @@ class S35_Core {
         update_option('s35_core_installed', true);
         update_option('s35_core_version', S35_CORE_VERSION);
         update_option('s35_core_auto_generated', true);
+        update_option('s35_core_auto_generated', true);
+        update_option('s35_core_show_install_notice', true);
         update_option('s35_core_activated', current_time('mysql'));
         
         // Mark as installed from GitHub (not locally)
@@ -107,16 +109,17 @@ class S35_Core {
             delete_option('s35_core_cleanup_notice');
         }
         
-        // Auto-generation notice (only on plugins page)
-        if (get_option('s35_core_auto_generated') && current_user_can('manage_options')) {
-            $screen = get_current_screen();
-            if ($screen && $screen->id === 'plugins') {
-                $install_method = get_option('s35_core_installed_from_github') ? 'GitHub' : 'locally';
-                echo '<div class="notice notice-info is-dismissible">
-                    <p><strong>35s Core:</strong> This plugin was automatically installed from ' . esc_html($install_method) . ' to support your 35s plugins suite. It manages shared functionality and can be safely left active.</p>
-                </div>';
-            }
-        }
+// Auto-generation notice (only show once)
+if (get_option('s35_core_show_install_notice') && current_user_can('manage_options')) {
+    $screen = get_current_screen();
+    if ($screen && $screen->id === 'plugins') {
+        $install_method = get_option('s35_core_installed_from_github') ? 'GitHub' : 'locally';
+        echo '<div class="notice notice-info is-dismissible">
+            <p><strong>35s Core:</strong> This plugin was automatically installed from ' . esc_html($install_method) . ' to support your 35s plugins suite. It manages shared functionality and can be safely left active.</p>
+        </div>';
+        delete_option('s35_core_show_install_notice'); // Remove after showing once
+    }
+}
         
         // Installation success notice
         if (get_option('s35_core_install_success_notice')) {
