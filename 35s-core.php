@@ -3,7 +3,7 @@
 Plugin Name: 35s Core
 Plugin URI: https://35sites.com/wordpress-plugins/
 Description: Core functionality for all 35s plugins. Provides centralized menu management, shared utilities, and automatic updates from GitHub.
-Version: 1.0.3
+Version: 1.0.4
 Author: Jorge Pereira (35sites)
 Author URI: https://35sites.com/wordpress-plugins/
 License: GPL v2 or later
