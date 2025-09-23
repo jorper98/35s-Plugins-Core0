@@ -20,6 +20,11 @@ if (!class_exists('S35_Menu_Manager')) {
         public function __construct() {
             // Hook with priority 5 to ensure main menu is created first
             add_action('admin_menu', array($this, 'ensure_main_menu'), 5);
+            
+            // Add debug handlers if debug mode is enabled
+            if (defined('DEBUG_GITHUB_35S') && DEBUG_GITHUB_35S === true) {
+                add_action('admin_init', array($this, 'handle_debug_actions'));
+            }
         }
         
         public function ensure_main_menu() {
@@ -70,161 +75,152 @@ if (!class_exists('S35_Menu_Manager')) {
             );
         }
 
-        public function __construct() {
-    add_action('admin_menu', array($this, 'ensure_main_menu'), 5);
-    
-    // Add debug handlers if debug mode is enabled
-    if (defined('DEBUG_GITHUB_35S') && DEBUG_GITHUB_35S === true) {
-        add_action('admin_init', array($this, 'handle_debug_actions'));
-    }
-}
-
-public function handle_debug_actions() {
-    if (!current_user_can('manage_options')) {
-        return;
-    }
-    
-    // Handle GitHub download test
-    if (isset($_GET['test_github_download']) && $_GET['page'] === '35s-plugins') {
-        $this->test_github_download();
-        exit;
-    }
-    
-    // Handle force GitHub install
-    if (isset($_GET['force_github_install']) && $_GET['page'] === '35s-plugins') {
-        $this->force_github_install();
-        exit;
-    }
-}
-
-private function test_github_download() {
-    echo '<div style="margin: 20px; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">';
-    echo '<h2>🔍 GitHub Download Test</h2>';
-    
-    $test_urls = array(
-        '35s-core.php' => 'https://raw.githubusercontent.com/jorper98/35s-Plugins-Core0/main/35s-core.php',
-        'class-s35-menu-manager.php' => 'https://raw.githubusercontent.com/jorper98/35s-Plugins-Core0/main/includes/class-s35-menu-manager.php',
-        'README.txt' => 'https://raw.githubusercontent.com/jorper98/35s-Plugins-Core0/main/README.txt'
-    );
-    
-    foreach ($test_urls as $filename => $url) {
-        echo '<div style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 4px;">';
-        echo '<h3 style="margin-top: 0;">📁 ' . esc_html($filename) . '</h3>';
-        echo '<p><strong>URL:</strong> <a href="' . esc_url($url) . '" target="_blank" style="font-family: monospace; font-size: 12px;">' . esc_html($url) . '</a></p>';
-        
-        $response = wp_remote_get($url, array(
-            'timeout' => 30,
-            'user-agent' => 'WordPress/35s-plugins-tester'
-        ));
-        
-        if (is_wp_error($response)) {
-            echo '<p style="color: #dc3545; font-weight: bold;">❌ ERROR: ' . esc_html($response->get_error_message()) . '</p>';
-        } else {
-            $http_code = wp_remote_retrieve_response_code($response);
-            $body = wp_remote_retrieve_body($response);
-            $content_length = strlen($body);
+        public function handle_debug_actions() {
+            if (!current_user_can('manage_options')) {
+                return;
+            }
             
-            if ($http_code === 200 && $content_length > 0) {
-                echo '<p style="color: #28a745; font-weight: bold;">✅ SUCCESS</p>';
-                echo '<p><strong>Size:</strong> ' . number_format($content_length) . ' bytes</p>';
-                echo '<details><summary style="cursor: pointer; color: #007cba;">📝 Preview first 500 characters</summary>';
-                echo '<pre style="background: #f8f9fa; padding: 10px; border-radius: 3px; overflow: auto; font-size: 11px;">' . esc_html(substr($body, 0, 500)) . '...</pre></details>';
-            } else {
-                echo '<p style="color: #dc3545; font-weight: bold;">❌ FAILED - HTTP ' . esc_html($http_code) . '</p>';
-                if ($content_length > 0) {
-                    echo '<pre style="background: #f8d7da; padding: 10px; border-radius: 3px;">' . esc_html(substr($body, 0, 500)) . '</pre>';
-                }
+            // Handle GitHub download test
+            if (isset($_GET['test_github_download']) && $_GET['page'] === '35s-plugins') {
+                $this->test_github_download();
+                exit;
+            }
+            
+            // Handle force GitHub install
+            if (isset($_GET['force_github_install']) && $_GET['page'] === '35s-plugins') {
+                $this->force_github_install();
+                exit;
             }
         }
-        echo '</div>';
-    }
-    
-    echo '<div style="border: 1px solid #17a2b8; background: #d1ecf1; padding: 15px; margin: 20px 0; border-radius: 4px;">';
-    echo '<h3 style="margin-top: 0; color: #0c5460;">💾 File System Test</h3>';
-    $test_dir = WP_PLUGIN_DIR . '/35s-write-test';
-    if (wp_mkdir_p($test_dir) && file_put_contents($test_dir . '/test.txt', 'test') !== false) {
-        echo '<p style="color: #28a745;">✅ File system: Write permissions OK</p>';
-        unlink($test_dir . '/test.txt');
-        rmdir($test_dir);
-    } else {
-        echo '<p style="color: #dc3545;">❌ File system: Write permissions FAILED</p>';
-    }
-    echo '</div>';
-    
-    echo '<p><a href="' . admin_url('admin.php?page=35s-plugins') . '" class="button button-primary">← Back to 35s Plugins</a></p>';
-    echo '</div>';
-}
 
-private function force_github_install() {
-    echo '<div style="margin: 20px; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">';
-    echo '<h2>🔄 Force GitHub Reinstall</h2>';
-    
-    // Only proceed if we have the installer class
-    if (!class_exists('S35_GitHub_Core_Installer')) {
-        echo '<p style="color: #dc3545;">❌ S35_GitHub_Core_Installer class not available</p>';
-        echo '<p><a href="' . admin_url('admin.php?page=35s-plugins') . '" class="button">← Back</a></p>';
-        echo '</div>';
-        return;
-    }
-    
-    echo '<div style="background: #fff3cd; padding: 15px; margin: 10px 0; border-radius: 4px;">';
-    echo '<p><strong>⚠️ Warning:</strong> This will delete and reinstall the core plugin from GitHub.</p>';
-    echo '</div>';
-    
-    // Remove existing core
-    $core_dir = WP_PLUGIN_DIR . '/35s-core';
-    if (is_dir($core_dir)) {
-        echo '<p>🗑️ Removing existing core directory...</p>';
-        $this->delete_directory_recursive($core_dir);
-    }
-    
-    // Reset core options
-    delete_option('s35_core_installed_from_github');
-    delete_option('s35_core_created_locally');
-    delete_option('s35_core_last_update_check');
-    delete_option('s35_core_installed');
-    
-    echo '<p>📥 Attempting fresh install from GitHub...</p>';
-    
-    $result = S35_GitHub_Core_Installer::ensure_core_plugin();
-    
-    if ($result) {
-        echo '<p style="color: #28a745; font-weight: bold;">✅ Installation: SUCCESS</p>';
-    } else {
-        echo '<p style="color: #dc3545; font-weight: bold;">❌ Installation: FAILED</p>';
-    }
-    
-    // Check what was installed
-    if (file_exists(WP_PLUGIN_DIR . '/35s-core/35s-core.php')) {
-        $content = file_get_contents(WP_PLUGIN_DIR . '/35s-core/35s-core.php');
-        if (strpos($content, 'Created as local fallback') !== false) {
-            echo '<p style="color: #fd7e14;">⚠️ Local fallback was created (GitHub download failed)</p>';
-        } else {
-            echo '<p style="color: #28a745;">✅ GitHub version was downloaded successfully</p>';
+        private function test_github_download() {
+            echo '<div style="margin: 20px; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">';
+            echo '<h2>🔍 GitHub Download Test</h2>';
+            
+            $test_urls = array(
+                '35s-core.php' => 'https://raw.githubusercontent.com/jorper98/35s-Plugins-Core0/main/35s-core.php',
+                'class-s35-menu-manager.php' => 'https://raw.githubusercontent.com/jorper98/35s-Plugins-Core0/main/includes/class-s35-menu-manager.php',
+                'README.txt' => 'https://raw.githubusercontent.com/jorper98/35s-Plugins-Core0/main/README.txt'
+            );
+            
+            foreach ($test_urls as $filename => $url) {
+                echo '<div style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 4px;">';
+                echo '<h3 style="margin-top: 0;">📁 ' . esc_html($filename) . '</h3>';
+                echo '<p><strong>URL:</strong> <a href="' . esc_url($url) . '" target="_blank" style="font-family: monospace; font-size: 12px;">' . esc_html($url) . '</a></p>';
+                
+                $response = wp_remote_get($url, array(
+                    'timeout' => 30,
+                    'user-agent' => 'WordPress/35s-plugins-tester'
+                ));
+                
+                if (is_wp_error($response)) {
+                    echo '<p style="color: #dc3545; font-weight: bold;">❌ ERROR: ' . esc_html($response->get_error_message()) . '</p>';
+                } else {
+                    $http_code = wp_remote_retrieve_response_code($response);
+                    $body = wp_remote_retrieve_body($response);
+                    $content_length = strlen($body);
+                    
+                    if ($http_code === 200 && $content_length > 0) {
+                        echo '<p style="color: #28a745; font-weight: bold;">✅ SUCCESS</p>';
+                        echo '<p><strong>Size:</strong> ' . number_format($content_length) . ' bytes</p>';
+                        echo '<details><summary style="cursor: pointer; color: #007cba;">📝 Preview first 500 characters</summary>';
+                        echo '<pre style="background: #f8f9fa; padding: 10px; border-radius: 3px; overflow: auto; font-size: 11px;">' . esc_html(substr($body, 0, 500)) . '...</pre></details>';
+                    } else {
+                        echo '<p style="color: #dc3545; font-weight: bold;">❌ FAILED - HTTP ' . esc_html($http_code) . '</p>';
+                        if ($content_length > 0) {
+                            echo '<pre style="background: #f8d7da; padding: 10px; border-radius: 3px;">' . esc_html(substr($body, 0, 500)) . '</pre>';
+                        }
+                    }
+                }
+                echo '</div>';
+            }
+            
+            echo '<div style="border: 1px solid #17a2b8; background: #d1ecf1; padding: 15px; margin: 20px 0; border-radius: 4px;">';
+            echo '<h3 style="margin-top: 0; color: #0c5460;">💾 File System Test</h3>';
+            $test_dir = WP_PLUGIN_DIR . '/35s-write-test';
+            if (wp_mkdir_p($test_dir) && file_put_contents($test_dir . '/test.txt', 'test') !== false) {
+                echo '<p style="color: #28a745;">✅ File system: Write permissions OK</p>';
+                unlink($test_dir . '/test.txt');
+                rmdir($test_dir);
+            } else {
+                echo '<p style="color: #dc3545;">❌ File system: Write permissions FAILED</p>';
+            }
+            echo '</div>';
+            
+            echo '<p><a href="' . admin_url('admin.php?page=35s-plugins') . '" class="button button-primary">← Back to 35s Plugins</a></p>';
+            echo '</div>';
         }
-        
-        if (is_plugin_active('35s-core/35s-core.php')) {
-            echo '<p style="color: #28a745;">✅ Plugin is ACTIVE</p>';
-        } else {
-            echo '<p style="color: #dc3545;">❌ Plugin is NOT active</p>';
-        }
-    } else {
-        echo '<p style="color: #dc3545;">❌ Core plugin file does not exist</p>';
-    }
-    
-    echo '<p><a href="' . admin_url('admin.php?page=35s-plugins') . '" class="button button-primary">← Back to 35s Plugins</a></p>';
-    echo '</div>';
-}
 
-private function delete_directory_recursive($dir) {
-    if (!is_dir($dir)) return;
-    $files = array_diff(scandir($dir), array('.', '..'));
-    foreach ($files as $file) {
-        $path = $dir . '/' . $file;
-        is_dir($path) ? $this->delete_directory_recursive($path) : unlink($path);
-    }
-    rmdir($dir);
-}
+        private function force_github_install() {
+            echo '<div style="margin: 20px; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">';
+            echo '<h2>🔄 Force GitHub Reinstall</h2>';
+            
+            // Only proceed if we have the installer class
+            if (!class_exists('S35_GitHub_Core_Installer')) {
+                echo '<p style="color: #dc3545;">❌ S35_GitHub_Core_Installer class not available</p>';
+                echo '<p><a href="' . admin_url('admin.php?page=35s-plugins') . '" class="button">← Back</a></p>';
+                echo '</div>';
+                return;
+            }
+            
+            echo '<div style="background: #fff3cd; padding: 15px; margin: 10px 0; border-radius: 4px;">';
+            echo '<p><strong>⚠️ Warning:</strong> This will delete and reinstall the core plugin from GitHub.</p>';
+            echo '</div>';
+            
+            // Remove existing core
+            $core_dir = WP_PLUGIN_DIR . '/35s-core';
+            if (is_dir($core_dir)) {
+                echo '<p>🗑️ Removing existing core directory...</p>';
+                $this->delete_directory_recursive($core_dir);
+            }
+            
+            // Reset core options
+            delete_option('s35_core_installed_from_github');
+            delete_option('s35_core_created_locally');
+            delete_option('s35_core_last_update_check');
+            delete_option('s35_core_installed');
+            
+            echo '<p>📥 Attempting fresh install from GitHub...</p>';
+            
+            $result = S35_GitHub_Core_Installer::ensure_core_plugin();
+            
+            if ($result) {
+                echo '<p style="color: #28a745; font-weight: bold;">✅ Installation: SUCCESS</p>';
+            } else {
+                echo '<p style="color: #dc3545; font-weight: bold;">❌ Installation: FAILED</p>';
+            }
+            
+            // Check what was installed
+            if (file_exists(WP_PLUGIN_DIR . '/35s-core/35s-core.php')) {
+                $content = file_get_contents(WP_PLUGIN_DIR . '/35s-core/35s-core.php');
+                if (strpos($content, 'Created as local fallback') !== false) {
+                    echo '<p style="color: #fd7e14;">⚠️ Local fallback was created (GitHub download failed)</p>';
+                } else {
+                    echo '<p style="color: #28a745;">✅ GitHub version was downloaded successfully</p>';
+                }
+                
+                if (is_plugin_active('35s-core/35s-core.php')) {
+                    echo '<p style="color: #28a745;">✅ Plugin is ACTIVE</p>';
+                } else {
+                    echo '<p style="color: #dc3545;">❌ Plugin is NOT active</p>';
+                }
+            } else {
+                echo '<p style="color: #dc3545;">❌ Core plugin file does not exist</p>';
+            }
+            
+            echo '<p><a href="' . admin_url('admin.php?page=35s-plugins') . '" class="button button-primary">← Back to 35s Plugins</a></p>';
+            echo '</div>';
+        }
+
+        private function delete_directory_recursive($dir) {
+            if (!is_dir($dir)) return;
+            $files = array_diff(scandir($dir), array('.', '..'));
+            foreach ($files as $file) {
+                $path = $dir . '/' . $file;
+                is_dir($path) ? $this->delete_directory_recursive($path) : unlink($path);
+            }
+            rmdir($dir);
+        }
         
         public function display_main_page() {
             $active_plugins = $this->get_active_35s_plugins();
@@ -238,29 +234,30 @@ private function delete_directory_recursive($dir) {
                         <h2><?php _e('Welcome to 35s Plugins', '35s-core'); ?></h2>
                         <p><?php _e('Manage all your 35s plugins from this central dashboard. The core functionality is automatically synchronized with GitHub for seamless updates.', '35s-core'); ?></p>
                     </div>
-            <!-- Debug Tools Section -->
-                        <?php
-                        $show_debug = defined('DEBUG_GITHUB_35S') && DEBUG_GITHUB_35S === true;
-                        if ($show_debug && current_user_can('manage_options')): 
-                        ?>
-                        <div class="s35-debug-panel" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 20px 0; border-radius: 4px;">
-                            <h3 style="margin-top: 0; color: #856404;">🛠️ Debug Tools</h3>
-                            <p style="margin-bottom: 15px; color: #856404;">
-                                <strong>Developer Mode Active</strong> - These tools help debug GitHub integration issues.
-                            </p>
-                            <p>
-                                <a href="<?php echo admin_url('admin.php?page=35s-plugins&test_github_download=1'); ?>" class="button button-secondary">
-                                    Test GitHub Downloads
-                                </a>
-                                <a href="<?php echo admin_url('admin.php?page=35s-plugins&force_github_install=1'); ?>" class="button button-secondary">
-                                    Force GitHub Reinstall
-                                </a>
-                            </p>
-                            <p style="margin-bottom: 0; font-size: 12px; color: #856404;">
-                                <strong>Note:</strong> Set <code>define('DEBUG_GITHUB_35S', false);</code> in wp-config.php to hide these tools.
-                            </p>
-                        </div>
-                        <?php endif; ?>
+                    
+                    <!-- Debug Tools Section -->
+                    <?php
+                    $show_debug = defined('DEBUG_GITHUB_35S') && DEBUG_GITHUB_35S === true;
+                    if ($show_debug && current_user_can('manage_options')): 
+                    ?>
+                    <div class="s35-debug-panel" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                        <h3 style="margin-top: 0; color: #856404;">🛠️ Debug Tools</h3>
+                        <p style="margin-bottom: 15px; color: #856404;">
+                            <strong>Developer Mode Active</strong> - These tools help debug GitHub integration issues.
+                        </p>
+                        <p>
+                            <a href="<?php echo admin_url('admin.php?page=35s-plugins&test_github_download=1'); ?>" class="button button-secondary">
+                                Test GitHub Downloads
+                            </a>
+                            <a href="<?php echo admin_url('admin.php?page=35s-plugins&force_github_install=1'); ?>" class="button button-secondary">
+                                Force GitHub Reinstall
+                            </a>
+                        </p>
+                        <p style="margin-bottom: 0; font-size: 12px; color: #856404;">
+                            <strong>Note:</strong> Set <code>define('DEBUG_GITHUB_35S', false);</code> in wp-config.php to hide these tools.
+                        </p>
+                    </div>
+                    <?php endif; ?>
                     
                     <?php if (!empty($active_plugins)): ?>
                     <div class="s35-plugins-grid">
@@ -341,7 +338,7 @@ private function delete_directory_recursive($dir) {
                                     <?php _e('More Plugins', '35s-core'); ?>
                                 </a>
                                 <?php if ($core_info['installed_from_github']): ?>
-                                <a href="https://github.com/jorgep/35s-core-plugin" target="_blank" class="button">
+                                <a href="https://github.com/jorper98/35s-Plugins-Core0" target="_blank" class="button">
                                     <span class="dashicons dashicons-external"></span>
                                     <?php _e('View on GitHub', '35s-core'); ?>
                                 </a>
