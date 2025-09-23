@@ -82,6 +82,29 @@ if (!class_exists('S35_Menu_Manager')) {
                         <h2><?php _e('Welcome to 35s Plugins', '35s-core'); ?></h2>
                         <p><?php _e('Manage all your 35s plugins from this central dashboard. The core functionality is automatically synchronized with GitHub for seamless updates.', '35s-core'); ?></p>
                     </div>
+            <!-- Debug Tools Section -->
+                        <?php
+                        $show_debug = defined('DEBUG_GITHUB_35S') && DEBUG_GITHUB_35S === true;
+                        if ($show_debug && current_user_can('manage_options')): 
+                        ?>
+                        <div class="s35-debug-panel" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                            <h3 style="margin-top: 0; color: #856404;">🛠️ Debug Tools</h3>
+                            <p style="margin-bottom: 15px; color: #856404;">
+                                <strong>Developer Mode Active</strong> - These tools help debug GitHub integration issues.
+                            </p>
+                            <p>
+                                <a href="<?php echo admin_url('admin.php?page=35s-plugins&test_github_download=1'); ?>" class="button button-secondary">
+                                    Test GitHub Downloads
+                                </a>
+                                <a href="<?php echo admin_url('admin.php?page=35s-plugins&force_github_install=1'); ?>" class="button button-secondary">
+                                    Force GitHub Reinstall
+                                </a>
+                            </p>
+                            <p style="margin-bottom: 0; font-size: 12px; color: #856404;">
+                                <strong>Note:</strong> Set <code>define('DEBUG_GITHUB_35S', false);</code> in wp-config.php to hide these tools.
+                            </p>
+                        </div>
+                        <?php endif; ?>
                     
                     <?php if (!empty($active_plugins)): ?>
                     <div class="s35-plugins-grid">
