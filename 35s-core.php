@@ -3,7 +3,7 @@
 Plugin Name: 35s Core
 Plugin URI: https://35sites.com/wordpress-plugins/
 Description: Core functionality for all 35s plugins. Provides centralized menu management, shared utilities, and automatic updates from GitHub.
-Version: 1.0.1
+Version: 1.0.2
 Author: Jorge Pereira (35sites)
 Author URI: https://35sites.com/wordpress-plugins/
 License: GPL v2 or later
@@ -66,6 +66,10 @@ class S35_Core {
         update_option('s35_core_auto_generated', true);
         update_option('s35_core_activated', current_time('mysql'));
         
+        // Mark as installed from GitHub (not locally)
+        update_option('s35_core_installed_from_github', true);
+        delete_option('s35_core_created_locally'); // Remove local flag if it exists
+        
         // Flush rewrite rules
         flush_rewrite_rules();
     }
@@ -109,7 +113,7 @@ class S35_Core {
             if ($screen && $screen->id === 'plugins') {
                 $install_method = get_option('s35_core_installed_from_github') ? 'GitHub' : 'locally';
                 echo '<div class="notice notice-info is-dismissible">
-                    <p><strong>35s Core:</strong> This plugin was automatically installed ' . esc_html($install_method) . ' to support your 35s plugins suite. It manages shared functionality and can be safely left active.</p>
+                    <p><strong>35s Core:</strong> This plugin was automatically installed from ' . esc_html($install_method) . ' to support your 35s plugins suite. It manages shared functionality and can be safely left active.</p>
                 </div>';
             }
         }
@@ -293,13 +297,10 @@ function s35_core_row_meta($links, $file) {
         );
         
         if (get_option('s35_core_installed_from_github')) {
-            $row_meta['github'] = '<a href="https://github.com/jorper98/35s-Plugins-Core0" target="_blank">' . __('View on GitHub', '35s-core') . '</a>';
-            
+            $row_meta['github'] = '<a href="https://github.com/jorgep/35s-core-plugin" target="_blank">' . __('View on GitHub', '35s-core') . '</a>';
         }
         
         return array_merge($links, $row_meta);
     }
     return $links;
 }
-
-?>
