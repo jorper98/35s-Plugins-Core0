@@ -19,3 +19,7 @@ Key Benefits of This Approach:
  Fallback System - If GitHub is unavailable, creates local fallback
  Smart Cleanup - Deactivates core when no 35s plugins are active
  Version Control - Track changes and roll back if needed
+
+Change Log
+
+v1.0.5 - Minor Bug Changes
