@@ -3,7 +3,7 @@
 Plugin Name: 35s Core
 Plugin URI: https://35sites.com/wordpress-plugins/
 Description: Core functionality for all 35s plugins. Provides centralized menu management, shared utilities, and automatic updates from GitHub.
-Version: 1.0.4
+Version: 1.0.5
 Author: Jorge Pereira (35sites)
 Author URI: https://35sites.com/wordpress-plugins/
 License: GPL v2 or later
@@ -17,7 +17,10 @@ if (!defined('ABSPATH')) {
 }
 
 // Define constants
-define('S35_CORE_VERSION', '1.0.1');
+// Define the version constant dynamically
+$plugin_data = get_file_data(__FILE__, array('Version' => 'Version'), false);
+define('S35_CORE_VERSION', $plugin_data['Version']);
+
 define('S35_CORE_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('S35_CORE_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -64,7 +67,6 @@ class S35_Core {
         update_option('s35_core_installed', true);
         update_option('s35_core_version', S35_CORE_VERSION);
         update_option('s35_core_auto_generated', true);
-        update_option('s35_core_auto_generated', true);
         update_option('s35_core_show_install_notice', true);
         update_option('s35_core_activated', current_time('mysql'));
         
@@ -109,17 +111,17 @@ class S35_Core {
             delete_option('s35_core_cleanup_notice');
         }
         
-// Auto-generation notice (only show once)
-if (get_option('s35_core_show_install_notice') && current_user_can('manage_options')) {
-    $screen = get_current_screen();
-    if ($screen && $screen->id === 'plugins') {
-        $install_method = get_option('s35_core_installed_from_github') ? 'GitHub' : 'locally';
-        echo '<div class="notice notice-info is-dismissible">
-            <p><strong>35s Core:</strong> This plugin was automatically installed from ' . esc_html($install_method) . ' to support your 35s plugins suite. It manages shared functionality and can be safely left active.</p>
-        </div>';
-        delete_option('s35_core_show_install_notice'); // Remove after showing once
-    }
-}
+        // Auto-generation notice (only show once)
+        if (get_option('s35_core_show_install_notice') && current_user_can('manage_options')) {
+            $screen = get_current_screen();
+            if ($screen && $screen->id === 'plugins') {
+                $install_method = get_option('s35_core_installed_from_github') ? 'GitHub' : 'locally';
+                echo '<div class="notice notice-info is-dismissible">
+                    <p><strong>35s Core:</strong> This plugin was automatically installed from ' . esc_html($install_method) . ' to support your 35s plugins suite. It manages shared functionality and can be safely left active.</p>
+                </div>';
+                delete_option('s35_core_show_install_notice'); // Remove after showing once
+            }
+        }
         
         // Installation success notice
         if (get_option('s35_core_install_success_notice')) {
@@ -159,50 +161,12 @@ if (get_option('s35_core_show_install_notice') && current_user_can('manage_optio
         $active_plugins = get_option('active_plugins', array());
         
         foreach ($active_plugins as $plugin) {
-            if (strpos($plugin, $plugin_slug . '/') === 0) {
+            if (stripos($plugin, $plugin_slug) === 0) {
                 return true;
             }
         }
         
         return false;
-    }
-    
-    /**
-     * Get list of active 35s plugins
-     */
-    public static function get_active_35s_plugins() {
-        $plugins = array();
-        
-        $plugin_definitions = array(
-            '35s-post-gaps' => array(
-                'name' => '35s Post Gaps',
-                'description' => 'Manages post gaps and spacing for better content layout.',
-                'admin_url' => admin_url('admin.php?page=35s-post-gaps')
-            ),
-            '35s-request-lister' => array(
-                'name' => '35s Request Lister',
-                'description' => 'Lists and manages various types of requests efficiently.',
-                'admin_url' => admin_url('admin.php?page=35s-request-lister')
-            ),
-            '35s-smart-tag-blocks' => array(
-                'name' => '35s Smart Tag Blocks',
-                'description' => 'Advanced tag management with intelligent block features.',
-                'admin_url' => admin_url('admin.php?page=35s-smart-tag-blocks')
-            ),
-            '35sSecureFileDownload' => array(
-                'name' => '35s Secure File Download',
-                'description' => 'Secure file download management with access controls.',
-                'admin_url' => admin_url('admin.php?page=35sSecureFileDownload')
-            )
-        );
-        
-        foreach ($plugin_definitions as $plugin_slug => $plugin_info) {
-            if (self::is_plugin_active($plugin_slug)) {
-                $plugins[] = $plugin_info;
-            }
-        }
-        
-        return $plugins;
     }
 }
 
@@ -246,7 +210,7 @@ function s35_core_uninstall() {
     $active_plugins = get_option('active_plugins', array());
     $s35_plugins_active = false;
     
-    $s35_plugin_patterns = array('35s-post-gaps/', '35s-request-lister/', '35s-smart-tag-blocks/', '35sSecureFileDownload/');
+    $s35_plugin_patterns = array('35s-post-gaps/', '35s-request-lister/', '35s-smart-tag-blocks/', '35ssecurefiledownload/');
     
     foreach ($active_plugins as $plugin) {
         foreach ($s35_plugin_patterns as $pattern) {
