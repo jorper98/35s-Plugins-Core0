@@ -223,7 +223,6 @@ if (!class_exists('S35_Menu_Manager')) {
         }
         
         public function display_main_page() {
-            $active_plugins = $this->get_active_35s_plugins();
             $core_info = $this->get_core_info();
             ?>
             <div class="wrap">
@@ -232,10 +231,9 @@ if (!class_exists('S35_Menu_Manager')) {
                 <div class="s35-dashboard">
                     <div class="s35-welcome-panel">
                         <h2><?php _e('Welcome to 35s Plugins', '35s-core'); ?></h2>
-                        <p><?php _e('Manage all your 35s plugins from this central dashboard. The core functionality is automatically synchronized with GitHub for seamless updates.', '35s-core'); ?></p>
+                        <p><?php _e('Central dashboard for 35s Plugins.<br>Plugins you can use every day! ', '35s-core'); ?></p>
                     </div>
                     
-                    <!-- Debug Tools Section -->
                     <?php
                     $show_debug = defined('DEBUG_GITHUB_35S') && DEBUG_GITHUB_35S === true;
                     if ($show_debug && current_user_can('manage_options')): 
@@ -256,29 +254,6 @@ if (!class_exists('S35_Menu_Manager')) {
                         <p style="margin-bottom: 0; font-size: 12px; color: #856404;">
                             <strong>Note:</strong> Set <code>define('DEBUG_GITHUB_35S', false);</code> in wp-config.php to hide these tools.
                         </p>
-                    </div>
-                    <?php endif; ?>
-                    
-                    <?php if (!empty($active_plugins)): ?>
-                    <div class="s35-plugins-grid">
-                        <h3><?php _e('Active Plugins', '35s-core'); ?></h3>
-                        <div class="s35-grid">
-                            <?php foreach ($active_plugins as $plugin): ?>
-                            <div class="s35-plugin-card">
-                                <h4><?php echo esc_html($plugin['name']); ?></h4>
-                                <p><?php echo esc_html($plugin['description']); ?></p>
-                                <?php if (!empty($plugin['admin_url'])): ?>
-                                <a href="<?php echo esc_url($plugin['admin_url']); ?>" class="button button-primary">
-                                    <?php _e('Configure', '35s-core'); ?>
-                                </a>
-                                <?php endif; ?>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                    <?php else: ?>
-                    <div class="notice notice-info inline">
-                        <p><?php _e('No 35s plugins detected. Install and activate 35s plugins to see them here.', '35s-core'); ?></p>
                     </div>
                     <?php endif; ?>
                     
@@ -495,43 +470,6 @@ if (!class_exists('S35_Menu_Manager')) {
                 }
             </style>
             <?php
-        }
-        
-        private function get_active_35s_plugins() {
-            $plugins = array();
-            
-            // Plugin definitions - add your plugins here
-            $plugin_definitions = array(
-                '35s-post-gaps/35s-post-gaps.php' => array(
-                    'name' => '35s Post Gaps',
-                    'description' => 'Identifies gaps in your posting schedule with calendar and list views.',
-                    'admin_url' => admin_url('admin.php?page=35s-post-gaps')
-                ),
-                '35s-request-lister/35s-request-lister.php' => array(
-                    'name' => '35s Request Lister',
-                    'description' => 'Lists and manages various types of requests efficiently.',
-                    'admin_url' => admin_url('admin.php?page=35s-request-lister')
-                ),
-                '35s-smart-tag-blocks/35s-smart-tag-blocks.php' => array(
-                    'name' => '35s Smart Tag Blocks',
-                    'description' => 'Advanced tag management with intelligent block features.',
-                    'admin_url' => admin_url('admin.php?page=35s-smart-tag-blocks')
-                ),
-                '35sSecureFileDownload/35sSecureFileDownload.php' => array(
-                    'name' => '35s Secure File Download',
-                    'description' => 'Secure file download management with access controls.',
-                    'admin_url' => admin_url('admin.php?page=35sSecureFileDownload')
-                )
-            );
-            
-            // Check which plugins are actually active
-            foreach ($plugin_definitions as $plugin_file => $plugin_info) {
-                if (is_plugin_active($plugin_file)) {
-                    $plugins[] = $plugin_info;
-                }
-            }
-            
-            return $plugins;
         }
         
         private function get_core_info() {
